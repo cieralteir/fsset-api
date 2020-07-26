@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order\Order;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -12,9 +13,10 @@ class OrderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $data = Order::with($request->input('includes', []))->paginate($request->input('per_page', 25));
+        return response()->json($data);
     }
 
     /**
