@@ -15,7 +15,31 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $data = Order::with($request->input('includes', []))->paginate($request->input('per_page', 25));
+        $includes = explode(',', $request->input('includes', ''));
+
+        $query = (new Order)->newQuery();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%$search%")
+                    ->orWhere(function ($q) use ($search) {
+                        $q->whereHas('items', function ($q) use ($search) {
+                            $q->where('product', 'LIKE', "%$search%");
+                        });
+                    });
+            });
+        }
+
+        if ($date = $request->input('created_at_start')) {
+            $query->where('created_at', '>=', settimezone($date));
+        }
+
+        if ($date = $request->input('created_at_end')) {
+            $query->where('created_at', '<=', settimezone($date));
+        }
+
+        $data = $query->with($includes)->paginate($request->input('per_page', 25));
+
         return response()->json($data);
     }
 
